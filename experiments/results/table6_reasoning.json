@@ -1,0 +1,12 @@
+[
+  {
+    "Method": "LEO",
+    "Mean \u00b1 std": "4.867 \u00b1 1.153",
+    "Median": "4.867"
+  },
+  {
+    "Method": "LEO-Rnd",
+    "Mean \u00b1 std": "10.292 \u00b1 3.362",
+    "Median": "10.292"
+  }
+]

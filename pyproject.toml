@@ -1,16 +1,37 @@
 [project]
 name = "leo"
 version = "0.1.0"
-description = "Add your description here"
+description = "Large Language Model-Based Evolutionary Optimizer: Reasoning with Elitism"
 readme = "README.md"
 authors = [
     { name = "hhgzeng", email = "hanhanguaizj@gmail.com" }
 ]
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+    "cmaes>=0.11.1",
+    "matplotlib>=3.9.0",
+    "numpy>=1.26.0",
+    "openai>=1.50.0",
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+    "pymoo>=0.6.1",
+    "rich>=13.7.0",
+    "scipy>=1.13.0",
+    "seaborn>=0.13.0",
+    "tabulate>=0.9.0",
+    "typer>=0.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10.0",
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.5.0",
+]
 
 [project.scripts]
-leo = "leo:main"
+leo = "leo.cli:app"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]

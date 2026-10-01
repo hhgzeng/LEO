@@ -5,6 +5,17 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
 
 # Virtual environments
 .venv
+
+# Caches and OS artifacts
+.DS_Store
+.leo_cache/
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+
