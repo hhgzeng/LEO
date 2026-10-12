@@ -7,11 +7,10 @@ Produces publication-quality Pareto front plots matching Figure 6.
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from leo.llm.client import LLMClient, LLMSettings
 from leo.modular.nsga2 import LEOModularNSGA2, StandardNSGA2
@@ -40,10 +39,10 @@ def run_experiment(
     run_zdt3 = problem.lower() in ["all", "zdt3"]
 
     mode_str = "MOCK" if use_mock else "LIVE (API)"
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f" Running Section 3.2 Multi-Objective Experiment [{mode_str}] (seed={seed})")
     print(f" Target: {problem.upper()} | Output dir: {out_path.resolve()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     zdt1_data = None
     zdt3_data = None
@@ -67,7 +66,7 @@ def run_experiment(
         zdt1_data = (true_front_zdt1, std_zdt1.pareto_f, leo_zdt1.pareto_f)
 
         # Plot individual ZDT1 figure
-        fig, ax = plt.subplots(figsize=(7, 6))
+        _fig, ax = plt.subplots(figsize=(7, 6))
         plot_pareto_panel(
             ax,
             true_front_zdt1,
@@ -77,7 +76,9 @@ def run_experiment(
             is_zdt3=False,
         )
         plt.tight_layout()
-        zdt1_fig_file = out_path / f"zdt1_pareto_front_{mode_str.lower().split()[0]}.png"
+        zdt1_fig_file = (
+            out_path / f"zdt1_pareto_front_{mode_str.lower().split()[0]}.png"
+        )
         plt.savefig(zdt1_fig_file, dpi=200)
         plt.close()
         print(f"  [+] Saved ZDT1 plot to: {zdt1_fig_file}")
@@ -101,7 +102,7 @@ def run_experiment(
         zdt3_data = (true_front_zdt3, std_zdt3.pareto_f, leo_zdt3.pareto_f)
 
         # Plot individual ZDT3 figure
-        fig, ax = plt.subplots(figsize=(7, 6))
+        _fig, ax = plt.subplots(figsize=(7, 6))
         plot_pareto_panel(
             ax,
             true_front_zdt3,
@@ -111,14 +112,16 @@ def run_experiment(
             is_zdt3=True,
         )
         plt.tight_layout()
-        zdt3_fig_file = out_path / f"zdt3_pareto_front_{mode_str.lower().split()[0]}.png"
+        zdt3_fig_file = (
+            out_path / f"zdt3_pareto_front_{mode_str.lower().split()[0]}.png"
+        )
         plt.savefig(zdt3_fig_file, dpi=200)
         plt.close()
         print(f"  [+] Saved ZDT3 plot to: {zdt3_fig_file}")
 
     # --- Plot Combined Figure 6 (if both were run) ---
     if zdt1_data is not None and zdt3_data is not None:
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
+        _fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
         plot_pareto_panel(
             ax1,
             zdt1_data[0],
@@ -143,8 +146,12 @@ def run_experiment(
         plt.close()
 
         # Archive to experiments/figures
-        shutil.copy(combined_fig_file, fig_archive_path / f"fig6_pareto_fronts_{suffix}.png")
-        print(f"\n[+] Successfully generated Figure 6 reproduction: {combined_fig_file}")
+        shutil.copy(
+            combined_fig_file, fig_archive_path / f"fig6_pareto_fronts_{suffix}.png"
+        )
+        print(
+            f"\n[+] Successfully generated Figure 6 reproduction: {combined_fig_file}"
+        )
 
     print(f"\nAll requested figures are saved in: {out_path.resolve()}\n")
 

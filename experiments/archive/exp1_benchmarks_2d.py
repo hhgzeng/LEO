@@ -72,7 +72,7 @@ def run_experiment(
     ]
 
     for prob_cls in BENCHMARKS_2D.values():
-        prob_name = prob_cls().name
+        prob_name = prob_cls().name  # type: ignore
         print(f"\n>>> Running Benchmark: {prob_name} (Seeds: {num_seeds})")
         results[prob_name] = {}
         convergence_histories[prob_name] = {}
@@ -82,7 +82,7 @@ def run_experiment(
             histories: list[list[float]] = []
 
             for seed in range(num_seeds):
-                problem = prob_cls()
+                problem = prob_cls()  # type: ignore
                 opt = opt_factory(problem, seed)
                 res = opt.optimize()
 
@@ -110,7 +110,7 @@ def run_experiment(
     for prob_name, opt_dict in results.items():
         row = {"Problem": prob_name}
         for opt_name, vals in opt_dict.items():
-            row[opt_name] = float(np.median(vals))
+            row[opt_name] = float(np.median(vals))  # type: ignore
         summary_data.append(row)
 
     df_summary = pd.DataFrame(summary_data)

@@ -9,8 +9,8 @@ Evaluates LEO across:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -58,10 +58,12 @@ def run_experiment(
     run_heat = run_all or app.lower() in ["heat", "heat_transfer"]
     run_wind = run_all or app.lower() in ["wind", "windfarm", "wind_farm"]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f" Running Section 3.4 Engineering Applications [{mode_suffix.upper()}]")
-    print(f" Target app: {app.upper()} | Seeds: {num_seeds} | Output dir: {out_path.resolve()}")
-    print(f"{'='*70}")
+    print(
+        f" Target app: {app.upper()} | Seeds: {num_seeds} | Output dir: {out_path.resolve()}"
+    )
+    print(f"{'=' * 70}")
 
     # Data holders for combined Fig 8
     nozzle_data = None
@@ -92,7 +94,12 @@ def run_experiment(
         ]
         optimal_contour = nozzle_prob.get_contour(nozzle_res.best_x)
 
-        nozzle_data = (initial_contours, final_explore_contours, optimal_contour, nozzle_res)
+        nozzle_data = (
+            initial_contours,
+            final_explore_contours,
+            optimal_contour,
+            nozzle_res,
+        )
 
         # Plot individual nozzle figure (Fig 8a-c)
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4.2))
@@ -110,7 +117,13 @@ def run_experiment(
         ax2.set_ylabel("y")
         ax2.grid(True, linestyle=":", alpha=0.6)
 
-        ax3.plot(optimal_contour[0], optimal_contour[1], color="#c92a2a", linewidth=2.5, label="Optimal Bell Contour")
+        ax3.plot(
+            optimal_contour[0],
+            optimal_contour[1],
+            color="#c92a2a",
+            linewidth=2.5,
+            label="Optimal Bell Contour",
+        )
         ax3.set_title("(c) Exploit Pool Optimal Shape", fontsize=11, fontweight="bold")
         ax3.set_xlabel("x")
         ax3.set_ylabel("y")
@@ -127,7 +140,9 @@ def run_experiment(
     # 2. 1D Heat Transfer Optimization
     # -------------------------------------------------------------
     if run_heat:
-        print("\n[2/3] Running Heat Transfer Optimization for Dim in {2, 4, 8} (100 iters)...")
+        print(
+            "\n[2/3] Running Heat Transfer Optimization for Dim in {2, 4, 8} (100 iters)..."
+        )
         heat_results = {}
         last_heat_res = None
         for d in [2, 4, 8]:
@@ -164,7 +179,14 @@ def run_experiment(
             best_t_padded[-1] = 1.0
 
             ax_ht.plot(gx, exact, "k--", label="Exact Solution", linewidth=2.0)
-            ax_ht.plot(gx, best_t_padded, "o-", color="#0b409c", label=f"LEO (Dim={d})", linewidth=1.8)
+            ax_ht.plot(
+                gx,
+                best_t_padded,
+                "o-",
+                color="#0b409c",
+                label=f"LEO (Dim={d})",
+                linewidth=1.8,
+            )
             ax_ht.set_title(f"Heat Profile: Dim={d}", fontsize=11, fontweight="bold")
             ax_ht.set_xlabel("x / L")
             ax_ht.set_ylabel("Temperature T")
@@ -182,7 +204,9 @@ def run_experiment(
     # 3. Wind Farm Layout Optimization
     # -------------------------------------------------------------
     if run_wind:
-        print(f"\n[3/3] Running Wind Farm Optimization for 2, 4, 8 turbines ({num_seeds} seed(s))...")
+        print(
+            f"\n[3/3] Running Wind Farm Optimization for 2, 4, 8 turbines ({num_seeds} seed(s))..."
+        )
         wind_positions_leo: dict[int, list[np.ndarray]] = {2: [], 4: [], 8: []}
         wind_positions_slsqp: dict[int, list[np.ndarray]] = {2: [], 4: [], 8: []}
 
@@ -216,15 +240,24 @@ def run_experiment(
         wind_data = (wind_positions_leo, wind_positions_slsqp)
 
         # Plot individual wind farm comparison
-        fig, axes = plt.subplots(2, 3, figsize=(15, 9.5))
+        fig, axes = plt.subplots(2, 3, figsize=(15, 9.5))  # noqa: RUF059
         for col_idx, n_t in enumerate([2, 4, 8]):
             # LEO row
             ax_l = axes[0, col_idx]
             coords_l = np.vstack(wind_positions_leo[n_t])
-            ax_l.scatter(coords_l[:, 0], coords_l[:, 1], color="#0b409c", alpha=0.7, s=40, edgecolors="black")
+            ax_l.scatter(
+                coords_l[:, 0],
+                coords_l[:, 1],
+                color="#0b409c",
+                alpha=0.7,
+                s=40,
+                edgecolors="black",
+            )
             ax_l.set_xlim(0, 1000)
             ax_l.set_ylim(0, 1000)
-            ax_l.set_title(f"LEO Turbine Layout: N={n_t}", fontsize=11, fontweight="bold")
+            ax_l.set_title(
+                f"LEO Turbine Layout: N={n_t}", fontsize=11, fontweight="bold"
+            )
             ax_l.set_xlabel("X (m)")
             ax_l.set_ylabel("Y (m)")
             ax_l.grid(True, linestyle=":", alpha=0.6)
@@ -232,7 +265,14 @@ def run_experiment(
             # SLSQP row
             ax_s = axes[1, col_idx]
             coords_s = np.vstack(wind_positions_slsqp[n_t])
-            ax_s.scatter(coords_s[:, 0], coords_s[:, 1], color="#495057", alpha=0.7, s=40, edgecolors="black")
+            ax_s.scatter(
+                coords_s[:, 0],
+                coords_s[:, 1],
+                color="#495057",
+                alpha=0.7,
+                s=40,
+                edgecolors="black",
+            )
             ax_s.set_xlim(0, 1000)
             ax_s.set_ylim(0, 1000)
             ax_s.set_title(f"SLSQP Reference: N={n_t}", fontsize=11, fontweight="bold")
@@ -250,7 +290,9 @@ def run_experiment(
     # Plot Full Combined Fig. 8 (if all ran)
     # -------------------------------------------------------------
     if nozzle_data is not None and heat_data is not None and wind_data is not None:
-        initial_contours, final_explore_contours, optimal_contour, nozzle_res = nozzle_data
+        initial_contours, final_explore_contours, optimal_contour, nozzle_res = (
+            nozzle_data
+        )
         heat_results, last_heat_res = heat_data
         wind_positions_leo, wind_positions_slsqp = wind_data
 
@@ -268,14 +310,24 @@ def run_experiment(
         ax_nz2 = plt.subplot2grid((4, 3), (0, 1))
         for xc, yc in final_explore_contours:
             ax_nz2.plot(xc, yc, color="darkorange", alpha=0.6)
-        ax_nz2.set_title("(b) Explore Pool Nozzle Shapes", fontsize=11, fontweight="bold")
+        ax_nz2.set_title(
+            "(b) Explore Pool Nozzle Shapes", fontsize=11, fontweight="bold"
+        )
         ax_nz2.set_xlabel("x")
         ax_nz2.set_ylabel("y")
         ax_nz2.grid(True, linestyle=":", alpha=0.6)
 
         ax_nz3 = plt.subplot2grid((4, 3), (0, 2))
-        ax_nz3.plot(optimal_contour[0], optimal_contour[1], color="#c92a2a", linewidth=2.5, label="Optimal Bell Contour")
-        ax_nz3.set_title("(c) Exploit Pool Optimal Nozzle Shape", fontsize=11, fontweight="bold")
+        ax_nz3.plot(
+            optimal_contour[0],
+            optimal_contour[1],
+            color="#c92a2a",
+            linewidth=2.5,
+            label="Optimal Bell Contour",
+        )
+        ax_nz3.set_title(
+            "(c) Exploit Pool Optimal Nozzle Shape", fontsize=11, fontweight="bold"
+        )
         ax_nz3.set_xlabel("x")
         ax_nz3.set_ylabel("y")
         ax_nz3.legend(frameon=True)
@@ -292,9 +344,18 @@ def run_experiment(
             best_t_padded[-1] = 1.0
 
             ax_ht.plot(gx, exact, "k--", label="Exact Solution", linewidth=2.0)
-            ax_ht.plot(gx, best_t_padded, "o-", color="#0b409c", label=f"LEO (Dim={d})", linewidth=1.8)
-            letter = chr(ord('d') + col_idx)
-            ax_ht.set_title(f"({letter}) Heat Profile: Dim={d}", fontsize=11, fontweight="bold")
+            ax_ht.plot(
+                gx,
+                best_t_padded,
+                "o-",
+                color="#0b409c",
+                label=f"LEO (Dim={d})",
+                linewidth=1.8,
+            )
+            letter = chr(ord("d") + col_idx)
+            ax_ht.set_title(
+                f"({letter}) Heat Profile: Dim={d}", fontsize=11, fontweight="bold"
+            )
             ax_ht.set_xlabel("x / L")
             ax_ht.set_ylabel("Temperature T")
             ax_ht.grid(True, linestyle=":", alpha=0.6)
@@ -305,11 +366,20 @@ def run_experiment(
         for col_idx, n_t in enumerate([2, 4, 8]):
             ax_wf_leo = plt.subplot2grid((4, 3), (2, col_idx))
             coords = np.vstack(wind_positions_leo[n_t])
-            ax_wf_leo.scatter(coords[:, 0], coords[:, 1], color="#0b409c", alpha=0.7, s=40, edgecolors="black")
+            ax_wf_leo.scatter(
+                coords[:, 0],
+                coords[:, 1],
+                color="#0b409c",
+                alpha=0.7,
+                s=40,
+                edgecolors="black",
+            )
             ax_wf_leo.set_xlim(0, 1000)
             ax_wf_leo.set_ylim(0, 1000)
-            letter = chr(ord('g') + col_idx)
-            ax_wf_leo.set_title(f"({letter}) LEO Turbine: N={n_t}", fontsize=11, fontweight="bold")
+            letter = chr(ord("g") + col_idx)
+            ax_wf_leo.set_title(
+                f"({letter}) LEO Turbine: N={n_t}", fontsize=11, fontweight="bold"
+            )
             ax_wf_leo.set_xlabel("X (m)")
             ax_wf_leo.set_ylabel("Y (m)")
             ax_wf_leo.grid(True, linestyle=":", alpha=0.6)
@@ -318,11 +388,20 @@ def run_experiment(
         for col_idx, n_t in enumerate([2, 4, 8]):
             ax_wf_ref = plt.subplot2grid((4, 3), (3, col_idx))
             coords = np.vstack(wind_positions_slsqp[n_t])
-            ax_wf_ref.scatter(coords[:, 0], coords[:, 1], color="#495057", alpha=0.7, s=40, edgecolors="black")
+            ax_wf_ref.scatter(
+                coords[:, 0],
+                coords[:, 1],
+                color="#495057",
+                alpha=0.7,
+                s=40,
+                edgecolors="black",
+            )
             ax_wf_ref.set_xlim(0, 1000)
             ax_wf_ref.set_ylim(0, 1000)
-            letter = chr(ord('j') + col_idx)
-            ax_wf_ref.set_title(f"({letter}) SLSQP Turbine: N={n_t}", fontsize=11, fontweight="bold")
+            letter = chr(ord("j") + col_idx)
+            ax_wf_ref.set_title(
+                f"({letter}) SLSQP Turbine: N={n_t}", fontsize=11, fontweight="bold"
+            )
             ax_wf_ref.set_xlabel("X (m)")
             ax_wf_ref.set_ylabel("Y (m)")
             ax_wf_ref.grid(True, linestyle=":", alpha=0.6)
@@ -332,16 +411,41 @@ def run_experiment(
         plt.savefig(fig8_file, dpi=200)
         plt.close()
 
-        shutil.copy(fig8_file, fig_archive_path / f"fig8_engineering_solutions_{mode_suffix}.png")
+        shutil.copy(
+            fig8_file,
+            fig_archive_path / f"fig8_engineering_solutions_{mode_suffix}.png",
+        )
         print(f"\n[+] Successfully generated Figure 8 reproduction: {fig8_file}")
 
         # Plot Fig 13 & 14 convergence curves
         _fig, (ax_c1, ax_c2) = plt.subplots(1, 2, figsize=(14, 5))
-        ax_c1.plot(nozzle_res.history_exploit_best_y, label="Exploit Pool (Min)", color="red", linewidth=2)
-        ax_c1.plot(nozzle_res.history_exploit_mean_y, label="Exploit Pool (Mean)", color="darkred", linestyle="--")
-        ax_c1.plot(nozzle_res.history_explore_best_y, label="Explore Pool (Min)", color="blue", linewidth=2)
-        ax_c1.plot(nozzle_res.history_explore_mean_y, label="Explore Pool (Mean)", color="darkblue", linestyle="--")
-        ax_c1.set_title("Nozzle Optimization Convergence (Fig. 13)", fontsize=12, fontweight="bold")
+        ax_c1.plot(
+            nozzle_res.history_exploit_best_y,
+            label="Exploit Pool (Min)",
+            color="red",
+            linewidth=2,
+        )
+        ax_c1.plot(
+            nozzle_res.history_exploit_mean_y,
+            label="Exploit Pool (Mean)",
+            color="darkred",
+            linestyle="--",
+        )
+        ax_c1.plot(
+            nozzle_res.history_explore_best_y,
+            label="Explore Pool (Min)",
+            color="blue",
+            linewidth=2,
+        )
+        ax_c1.plot(
+            nozzle_res.history_explore_mean_y,
+            label="Explore Pool (Mean)",
+            color="darkblue",
+            linestyle="--",
+        )
+        ax_c1.set_title(
+            "Nozzle Optimization Convergence (Fig. 13)", fontsize=12, fontweight="bold"
+        )
         ax_c1.set_xlabel("Iterations")
         ax_c1.set_ylabel("Objective Loss")
         ax_c1.set_yscale("log")
@@ -349,8 +453,15 @@ def run_experiment(
         ax_c1.grid(True, linestyle=":", alpha=0.6)
 
         if last_heat_res is not None:
-            ax_c2.plot(last_heat_res.history_exploit_best_y, label="Heat Conduction (Exploit Best)", color="darkgreen", linewidth=2)
-            ax_c2.set_title("Heat Conduction Convergence", fontsize=12, fontweight="bold")
+            ax_c2.plot(
+                last_heat_res.history_exploit_best_y,
+                label="Heat Conduction (Exploit Best)",
+                color="darkgreen",
+                linewidth=2,
+            )
+            ax_c2.set_title(
+                "Heat Conduction Convergence", fontsize=12, fontweight="bold"
+            )
             ax_c2.set_xlabel("Iterations")
             ax_c2.set_ylabel("Residual Loss")
             ax_c2.set_yscale("log")
@@ -362,7 +473,10 @@ def run_experiment(
         plt.savefig(fig13_file, dpi=200)
         plt.close()
 
-        shutil.copy(fig13_file, fig_archive_path / f"fig13_14_engineering_convergence_{mode_suffix}.png")
+        shutil.copy(
+            fig13_file,
+            fig_archive_path / f"fig13_14_engineering_convergence_{mode_suffix}.png",
+        )
         print(f"[+] Saved Figures 13 & 14 to: {fig13_file}")
 
     print(f"\nAll engineering figures are saved in: {out_path.resolve()}\n")

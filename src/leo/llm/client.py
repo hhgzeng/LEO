@@ -143,13 +143,16 @@ class LLMClient:
         if len(prompts) == 1:
             return [self.query(prompts[0], temperature)]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(prompts)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=len(prompts)
+        ) as executor:
             futures = [executor.submit(self.query, p, temperature) for p in prompts]
             return [f.result() for f in futures]
 
     async def aquery(self, prompt: str, temperature: float = 0.7) -> str:
         """Async compatibility wrapper."""
         import asyncio
+
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.query, prompt, temperature)
 
@@ -158,6 +161,6 @@ class LLMClient:
     ) -> list[str]:
         """Async parallel compatibility wrapper."""
         import asyncio
+
         tasks = [self.aquery(p, temperature) for p in prompts]
         return await asyncio.gather(*tasks)
-

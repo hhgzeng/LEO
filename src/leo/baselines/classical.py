@@ -288,7 +288,10 @@ class CMAESOptimizer:
                 if evals >= self.max_evals:
                     break
 
-            optimizer.tell(solutions)
+            if len(solutions) == optimizer.population_size:
+                optimizer.tell(solutions)
+            else:
+                break
 
         return BaselineResult(
             best_x=best_x, best_y=best_y, history_best_y=history, evaluations=evals

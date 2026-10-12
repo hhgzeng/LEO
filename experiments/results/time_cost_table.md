@@ -1,0 +1,13 @@
+# Execution Time and Cost Breakdown
+
+| Problem               | Algorithm   |   Runs |   Total Time (s) | Mean Time/Run (s)   |   Median Time (s) |   LLM Queries |   Prompt Tokens |   Completion Tokens |   Total Tokens | Est. Cost ($)   | Avg Cost/Run ($)   | Mode             |
+|:----------------------|:------------|-------:|-----------------:|:--------------------|------------------:|--------------:|----------------:|--------------------:|---------------:|:----------------|:-------------------|:-----------------|
+| Rosenbrock2D          | LEO         |      1 |             0.02 | 0.02 ± 0.00         |              0.02 |            60 |           14070 |                4488 |          18558 | $0.0138         | $0.0138            | Mock (Simulated) |
+| Rosenbrock2D          | LEO-RND     |      1 |             0.01 | 0.01 ± 0.00         |              0.01 |            60 |            5730 |                4200 |           9930 | $0.0092         | $0.0092            | Mock (Simulated) |
+| Rosenbrock2D          | CMA-ES      |      1 |             0.02 | 0.02 ± 0.00         |              0.02 |             0 |               0 |                   0 |              0 | $0.0000         | $0.0000            | Mock (Simulated) |
+| GoldsteinPrice        | LEO         |      1 |             0.01 | 0.01 ± 0.00         |              0.01 |            60 |           14565 |                4489 |          19054 | $0.0140         | $0.0140            | Mock (Simulated) |
+| GoldsteinPrice        | LEO-RND     |      1 |             0.01 | 0.01 ± 0.00         |              0.01 |            60 |            5790 |                4833 |          10623 | $0.0101         | $0.0101            | Mock (Simulated) |
+| GoldsteinPrice        | CMA-ES      |      1 |             0.02 | 0.02 ± 0.00         |              0.02 |             0 |               0 |                   0 |              0 | $0.0000         | $0.0000            | Mock (Simulated) |
+| ShiftedRosenbrock_10D | LEO         |      1 |             0.02 | 0.02 ± 0.00         |              0.02 |            60 |           27496 |               24881 |          52377 | $0.0511         | $0.0511            | Mock (Simulated) |
+| ShiftedRosenbrock_10D | LEO-RND     |      1 |             0.01 | 0.01 ± 0.00         |              0.01 |            60 |            5790 |               26433 |          32223 | $0.0425         | $0.0425            | Mock (Simulated) |
+| ShiftedRosenbrock_10D | CMA-ES      |      1 |             0.01 | 0.01 ± 0.00         |              0.01 |             0 |               0 |                   0 |              0 | $0.0000         | $0.0000            | Mock (Simulated) |

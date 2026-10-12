@@ -135,7 +135,9 @@ def optimize(
         table.add_row("Generations", str(mo_gens))
         table.add_row("Output Image", str(img_path.resolve()))
         console.print(table)
-        console.print(f"[bold green]Saved Pareto front plot to:[/bold green] [cyan]{img_path}[/cyan]")
+        console.print(
+            f"[bold green]Saved Pareto front plot to:[/bold green] [cyan]{img_path}[/cyan]"
+        )
         return
 
     prob = get_problem(problem, dim=dim)
@@ -178,6 +180,7 @@ def optimize(
 
     # Save convergence trajectory plot to tmp_results/
     from pathlib import Path
+
     import matplotlib.pyplot as plt
 
     out_dir = Path("tmp_results")
@@ -210,12 +213,14 @@ def optimize(
     plt.savefig(img_path, dpi=200)
     plt.close()
 
-    console.print(f"[bold green]Saved convergence plot to:[/bold green] [cyan]{img_path}[/cyan]")
+    console.print(
+        f"[bold green]Saved convergence plot to:[/bold green] [cyan]{img_path}[/cyan]"
+    )
 
     # Problem-specific engineering visualizer for Section 3.4
     if problem_clean in ["nozzle", "nozzle_shape"] and hasattr(prob, "get_contour"):
         eng_img_path = out_dir / f"nozzle_shape_{mode_suffix}.png"
-        xc, yc = prob.get_contour(res.best_x)
+        xc, yc = prob.get_contour(res.best_x)  # type: ignore
         plt.figure(figsize=(7, 4.5))
         plt.plot(xc, yc, color="#c92a2a", linewidth=2.5, label="Optimal Bell Contour")
         plt.title("LEO Optimal Supersonic Nozzle Contour (Fig. 8c)", fontsize=12)
@@ -227,17 +232,26 @@ def optimize(
         plt.tight_layout()
         plt.savefig(eng_img_path, dpi=200)
         plt.close()
-        console.print(f"[bold green]Saved Nozzle shape contour to:[/bold green] [cyan]{eng_img_path}[/cyan]")
+        console.print(
+            f"[bold green]Saved Nozzle shape contour to:[/bold green] [cyan]{eng_img_path}[/cyan]"
+        )
     elif problem_clean in ["heat", "heat_transfer"] and hasattr(prob, "exact_solution"):
         eng_img_path = out_dir / f"heat_{dim}d_profile_{mode_suffix}.png"
-        gx = prob.grid_x
-        exact_t = prob.exact_solution(gx)
+        gx = prob.grid_x  # type: ignore
+        exact_t = prob.exact_solution(gx)  # type: ignore
         best_t_padded = np.zeros(dim + 2)
         best_t_padded[1:-1] = res.best_x
         best_t_padded[-1] = 1.0
         plt.figure(figsize=(7, 4.5))
         plt.plot(gx, exact_t, "k--", label="Exact Solution", linewidth=2.0)
-        plt.plot(gx, best_t_padded, "o-", color="#0b409c", label=f"LEO (Dim={dim})", linewidth=1.8)
+        plt.plot(
+            gx,
+            best_t_padded,
+            "o-",
+            color="#0b409c",
+            label=f"LEO (Dim={dim})",
+            linewidth=1.8,
+        )
         plt.title(f"1D Steady-State Heat Profile (Dim={dim}, Fig. 8d-f)", fontsize=12)
         plt.xlabel("x / L", fontsize=11)
         plt.ylabel("Temperature T", fontsize=11)
@@ -247,16 +261,29 @@ def optimize(
         plt.tight_layout()
         plt.savefig(eng_img_path, dpi=200)
         plt.close()
-        console.print(f"[bold green]Saved Heat profile plot to:[/bold green] [cyan]{eng_img_path}[/cyan]")
+        console.print(
+            f"[bold green]Saved Heat profile plot to:[/bold green] [cyan]{eng_img_path}[/cyan]"
+        )
     elif problem_clean in ["windfarm", "wind_farm"] and hasattr(prob, "n_turbines"):
-        n_turbines = prob.n_turbines
-        eng_img_path = out_dir / f"windfarm_{n_turbines}turbines_layout_{mode_suffix}.png"
+        n_turbines = prob.n_turbines  # type: ignore
+        eng_img_path = (
+            out_dir / f"windfarm_{n_turbines}turbines_layout_{mode_suffix}.png"
+        )
         coords = res.best_x.reshape(n_turbines, 2)
         plt.figure(figsize=(6, 6))
-        plt.scatter(coords[:, 0], coords[:, 1], color="#0b409c", s=100, edgecolors="black", label=f"LEO Turbines (N={n_turbines})")
-        plt.xlim(0, prob.domain_size)
-        plt.ylim(0, prob.domain_size)
-        plt.title(f"Optimal Wind Turbine Layout (N={n_turbines}, Fig. 8g-i)", fontsize=12)
+        plt.scatter(
+            coords[:, 0],
+            coords[:, 1],
+            color="#0b409c",
+            s=100,
+            edgecolors="black",
+            label=f"LEO Turbines (N={n_turbines})",
+        )
+        plt.xlim(0, prob.domain_size)  # type: ignore
+        plt.ylim(0, prob.domain_size)  # type: ignore
+        plt.title(
+            f"Optimal Wind Turbine Layout (N={n_turbines}, Fig. 8g-i)", fontsize=12
+        )
         plt.xlabel("X (m)", fontsize=11)
         plt.ylabel("Y (m)", fontsize=11)
         plt.tick_params(direction="in", which="both", top=True, right=True)
@@ -265,7 +292,9 @@ def optimize(
         plt.tight_layout()
         plt.savefig(eng_img_path, dpi=200)
         plt.close()
-        console.print(f"[bold green]Saved Wind Farm layout plot to:[/bold green] [cyan]{eng_img_path}[/cyan]")
+        console.print(
+            f"[bold green]Saved Wind Farm layout plot to:[/bold green] [cyan]{eng_img_path}[/cyan]"
+        )
 
 
 @app.command()
@@ -281,11 +310,12 @@ def experiment(
     import sys
 
     exp_map = {
-        "exp1": "experiments/exp1_benchmarks_2d.py",
-        "exp2": "experiments/exp2_multi_objective.py",
-        "exp3": "experiments/exp3_high_dim.py",
-        "exp4": "experiments/exp4_engineering.py",
-        "exp5": "experiments/exp5_reasoning_rnd.py",
+        "exp1": "experiments/archive/exp1_benchmarks_2d.py",
+        "exp2": "experiments/archive/exp2_multi_objective.py",
+        "exp3": "experiments/archive/exp3_high_dim.py",
+        "exp4": "experiments/archive/exp4_engineering.py",
+        "exp5": "experiments/archive/exp5_reasoning_rnd.py",
+        "comparison": "experiments/run_comparison.py",
     }
 
     targets = list(exp_map.keys()) if name.lower() == "all" else [name.lower()]
