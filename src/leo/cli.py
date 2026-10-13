@@ -316,6 +316,7 @@ def experiment(
         "exp4": "experiments/archive/exp4_engineering.py",
         "exp5": "experiments/archive/exp5_reasoning_rnd.py",
         "comparison": "experiments/run_comparison.py",
+        "ablation": "experiments/run_ablation.py",
     }
 
     targets = list(exp_map.keys()) if name.lower() == "all" else [name.lower()]
@@ -336,6 +337,50 @@ def experiment(
 
         console.print(f"\n[bold yellow]Executing {target}: {script_path}[/bold yellow]")
         subprocess.run(cmd, check=True)
+
+
+@app.command()
+def ablation(
+    problem: str = typer.Option(
+        "all",
+        "--problem",
+        "-p",
+        help="Target problem: all | rosenbrock2d | goldstein_price | rosenbrock10d",
+    ),
+    variant: str = typer.Option(
+        "all",
+        "--variant",
+        "-v",
+        help="Ablation variant: all | full | no_history | no_elitism | random_perturb",
+    ),
+    iters: int = typer.Option(30, "--iters", "-i", help="Max optimization iterations"),
+    seeds: int = typer.Option(10, "--seeds", "-s", help="Number of random seeds"),
+    mock: bool = typer.Option(
+        True, "--mock/--live", help="Use deterministic mock LLM or live API"
+    ),
+) -> None:
+    """Run one-factor-at-a-time (OFAT) ablation study."""
+    import subprocess
+    import sys
+
+    cmd = [
+        sys.executable,
+        "experiments/run_ablation.py",
+        "--problem",
+        problem,
+        "--variant",
+        variant,
+        "--iters",
+        str(iters),
+        "--seeds",
+        str(seeds),
+    ]
+    if mock:
+        cmd.append("--mock")
+    else:
+        cmd.append("--live")
+
+    subprocess.run(cmd, check=True)
 
 
 def main() -> None:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 
 from leo.core.algorithm import LEOResult
-from leo.core.population import Population
+from leo.core.population import Population, port_and_filter
 from leo.llm.client import LLMClient
 from leo.llm.parser import parse_candidate_csv
 from leo.llm.prompts import build_rnd_exploit_prompt, build_rnd_explore_prompt
@@ -24,6 +24,7 @@ class LEORndOptimizer:
         problem: BaseProblem,
         pop_size: int = 10,
         max_iters: int = 100,
+        sol_to_port: int = 1,
         llm_client: LLMClient | None = None,
         seed: int | None = None,
         temperature: float = 0.7,
@@ -31,7 +32,9 @@ class LEORndOptimizer:
         self.problem = problem
         self.pop_size = pop_size
         self.max_iters = max_iters
+        self.sol_to_port = sol_to_port
         self.llm_client = llm_client or LLMClient()
+        self.seed = seed
         self.rng = np.random.default_rng(seed)
         self.temperature = temperature
 
@@ -52,20 +55,30 @@ class LEORndOptimizer:
         hist_exploit_x = [exploit_pop.x.copy()]
 
         for iteration in range(1, self.max_iters + 1):
+            # Sample random numerical format examples without loss context (Table 7 & Table 8)
+            ex_explore = self.problem.sample_uniform(3, rng=self.rng)
+            ex_exploit = self.problem.sample_uniform(3, rng=self.rng)
+
             # Prompts without historical candidate context or elitism
             prompt_explore = build_rnd_explore_prompt(
                 num_new=self.pop_size,
                 n_vars=self.problem.dim,
                 bounds=self.problem.bounds,
+                example_x=ex_explore,
             )
             prompt_exploit = build_rnd_exploit_prompt(
                 num_new=self.pop_size,
                 n_vars=self.problem.dim,
                 bounds=self.problem.bounds,
+                example_x=ex_exploit,
             )
 
+            cache_extra_explore = f"rnd_explore_seed{self.seed}_iter{iteration}"
+            cache_extra_exploit = f"rnd_exploit_seed{self.seed}_iter{iteration}"
             resp_explore, resp_exploit = self.llm_client.query_parallel(
-                [prompt_explore, prompt_exploit], temperature=self.temperature
+                [prompt_explore, prompt_exploit],
+                temperature=self.temperature,
+                cache_key_extras=[cache_extra_explore, cache_extra_exploit],
             )
 
             x_tilde_explore = parse_candidate_csv(
@@ -85,13 +98,21 @@ class LEORndOptimizer:
             y_tilde_exploit = self.problem.evaluate(x_tilde_exploit)
             total_evals += len(x_tilde_explore) + len(x_tilde_exploit)
 
-            # In LEO-Rnd: solutions are updated WITHOUT elitism PortFilter guardrail
-            explore_pop = Population(x=x_tilde_explore, y=y_tilde_explore).sorted()
-            # Exploit pool retains best found so far without importing from explore pool
-            combined_exploit = exploit_pop.concat(
-                Population(x=x_tilde_exploit, y=y_tilde_exploit)
+            # In LEO-Rnd: dual-population update with PortFilter (Algorithm 1 & Section 4.1.1)
+            new_explore = Population(x=x_tilde_explore, y=y_tilde_explore)
+            new_exploit = Population(x=x_tilde_exploit, y=y_tilde_exploit)
+
+            explore_pop = explore_pop.concat(new_explore)
+            exploit_pop = exploit_pop.concat(new_exploit)
+
+            explore_pop, exploit_pop = port_and_filter(
+                explore_pop=explore_pop,
+                exploit_pop=exploit_pop,
+                num_port=self.sol_to_port,
             )
-            exploit_pop = combined_exploit.truncate(self.pop_size)
+
+            explore_pop = explore_pop.truncate(self.pop_size)
+            exploit_pop = exploit_pop.truncate(self.pop_size)
 
             hist_exploit_best.append(exploit_pop.best_y)
             hist_exploit_mean.append(float(np.mean(exploit_pop.y)))

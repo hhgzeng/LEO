@@ -45,8 +45,15 @@ class MockLLM:
             min_val, max_val = -2.0, 2.0
 
         # 4. Check prompt type: Explore vs Exploit
-        is_exploit = "exploit close by" in prompt or "Current best candidate" in prompt
-        is_rnd = "LEO-Rnd" in prompt or "within all variables, in between" in prompt
+        is_rnd_explore = "within all variables, in between" in prompt
+        is_rnd_exploit = (
+            "to exploit close by regions" in prompt
+            and "Current best candidate" not in prompt
+        )
+        is_rnd = "LEO-Rnd" in prompt or is_rnd_explore or is_rnd_exploit
+        is_exploit = (
+            "exploit close by" in prompt or "Current best candidate" in prompt
+        ) and not is_rnd
 
         if is_rnd:
             candidates = self.rng.uniform(min_val, max_val, size=(rows, cols))

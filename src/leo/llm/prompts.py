@@ -99,15 +99,30 @@ def build_exploit_prompt(
     return prompt
 
 
+def _format_rnd_example(example_x: np.ndarray | None) -> str:
+    """Format example candidate points for LEO-Rnd prompts (Table 7 & Table 8)."""
+    if example_x is None or len(example_x) == 0:
+        return ""
+    arr = np.atleast_2d(example_x)
+    rows = [", ".join(f"{v:.6f}" for v in row) for row in arr]
+    if len(rows) >= 3:
+        ex_str = f"{rows[0]}; {rows[1]}; ...; {rows[-1]}"
+    else:
+        ex_str = "; ".join(rows)
+    return f" For example (with column headers): {ex_str}"
+
+
 def build_rnd_explore_prompt(
     num_new: int,
     n_vars: int,
     bounds: tuple[np.ndarray, np.ndarray],
+    example_x: np.ndarray | None = None,
 ) -> str:
     """Build LEO-Rnd Explore prompt (Table 5 & Table 7)."""
     lower_b, upper_b = bounds
     min_val_str = f"{float(np.min(lower_b)):.4g}"
     max_val_str = f"{float(np.max(upper_b)):.4g}"
+    example_suffix = _format_rnd_example(example_x)
 
     return (
         f"You must provide exactly {num_new} new, but completely different and scattered sets of values "
@@ -116,7 +131,7 @@ def build_rnd_explore_prompt(
         f"where each row represents a candidate and each column represents a variable. "
         f"The response must only contain these numerical values in the csv format without column headers. "
         f"Do not provide additional text or explanation. Strictly, provide only the variable values "
-        f"as floating point numbers with precision format %.6f."
+        f"as floating point numbers with precision format %.6f.{example_suffix}"
     )
 
 
@@ -124,11 +139,13 @@ def build_rnd_exploit_prompt(
     num_new: int,
     n_vars: int,
     bounds: tuple[np.ndarray, np.ndarray],
+    example_x: np.ndarray | None = None,
 ) -> str:
     """Build LEO-Rnd Exploit prompt (Table 5 & Table 8)."""
     lower_b, upper_b = bounds
     min_val_str = f"{float(np.min(lower_b)):.4g}"
     max_val_str = f"{float(np.max(upper_b)):.4g}"
+    example_suffix = _format_rnd_example(example_x)
 
     return (
         f"Please provide exactly {num_new} new but different candidates of values for all variables, "
@@ -137,7 +154,7 @@ def build_rnd_exploit_prompt(
         f"where each row represents a candidate and each column represents a variable. "
         f"The response must only contain these numerical values in the csv format without column headers and row index. "
         f"Do not provide additional text or explanation. Strictly, provide only the variable values "
-        f"as floating point numbers with precision format %.6f."
+        f"as floating point numbers with precision format %.6f.{example_suffix}"
     )
 
 

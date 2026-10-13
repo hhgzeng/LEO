@@ -54,15 +54,24 @@ class CacheDB:
                     model TEXT,
                     prompt TEXT,
                     response TEXT,
+                    latency REAL DEFAULT 0.0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """
             )
+            try:
+                conn.execute(
+                    "ALTER TABLE prompt_cache ADD COLUMN latency REAL DEFAULT 0.0"
+                )
+            except sqlite3.OperationalError:
+                pass
             conn.commit()
 
     @staticmethod
-    def compute_hash(model: str, prompt: str, temperature: float = 0.7) -> str:
-        content = f"{model}::{temperature:.2f}::{prompt}"
+    def compute_hash(
+        model: str, prompt: str, temperature: float = 0.7, extra: str = ""
+    ) -> str:
+        content = f"{model}::{temperature:.2f}::{extra}::{prompt}"
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     def get(self, key_hash: str) -> str | None:
@@ -74,11 +83,28 @@ class CacheDB:
             row = cursor.fetchone()
             return row[0] if row else None
 
-    def set(self, key_hash: str, model: str, prompt: str, response: str) -> None:
+    def get_with_latency(self, key_hash: str) -> tuple[str, float] | None:
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT response, COALESCE(latency, 0.0) FROM prompt_cache WHERE prompt_hash = ?",
+                (key_hash,),
+            )
+            row = cursor.fetchone()
+            return (str(row[0]), float(row[1])) if row else None
+
+    def set(
+        self,
+        key_hash: str,
+        model: str,
+        prompt: str,
+        response: str,
+        latency: float = 0.0,
+    ) -> None:
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO prompt_cache (prompt_hash, model, prompt, response) VALUES (?, ?, ?, ?)",
-                (key_hash, model, prompt, response),
+                "INSERT OR REPLACE INTO prompt_cache (prompt_hash, model, prompt, response, latency) VALUES (?, ?, ?, ?, ?)",
+                (key_hash, model, prompt, response, latency),
             )
             conn.commit()
 
@@ -105,30 +131,45 @@ class LLMClient:
             )
         return self._sync_client
 
-    def query(self, prompt: str, temperature: float = 0.7) -> str:
+    def query(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        cache_key_extra: str = "",
+        bypass_cache: bool = False,
+    ) -> str:
         """Query LLM with persistent disk caching and exponential backoff retry."""
         if self.settings.leo_mock_llm:
             return self.mock_llm.generate(prompt)
 
         key_hash = self.cache.compute_hash(
-            self.settings.leo_model_name, prompt, temperature
+            self.settings.leo_model_name, prompt, temperature, extra=cache_key_extra
         )
-        cached_res = self.cache.get(key_hash)
-        if cached_res is not None:
-            return cached_res
+        if not bypass_cache:
+            cached_res = self.cache.get(key_hash)
+            if cached_res is not None:
+                return cached_res
 
         # Execute API call with exponential backoff on HTTP 429
         delay = self.settings.initial_retry_delay
         for attempt in range(self.settings.max_retries):
             try:
+                t_req = time.perf_counter()
                 response = self.sync_client.chat.completions.create(
                     model=self.settings.leo_model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=temperature,
                     extra_body={"enable_thinking": False},
                 )
+                req_latency = time.perf_counter() - t_req
                 text = response.choices[0].message.content or ""
-                self.cache.set(key_hash, self.settings.leo_model_name, prompt, text)
+                self.cache.set(
+                    key_hash,
+                    self.settings.leo_model_name,
+                    prompt,
+                    text,
+                    latency=req_latency,
+                )
                 return text
             except (RateLimitError, APIConnectionError):
                 if attempt == self.settings.max_retries - 1:
@@ -138,29 +179,66 @@ class LLMClient:
 
         raise RuntimeError("Failed to complete LLM query after maximum retries.")
 
-    def query_parallel(self, prompts: list[str], temperature: float = 0.7) -> list[str]:
+    def query_parallel(
+        self,
+        prompts: list[str],
+        temperature: float = 0.7,
+        cache_key_extras: list[str] | None = None,
+        bypass_cache: bool = False,
+    ) -> list[str]:
         """Execute parallel LLM queries using ThreadPoolExecutor."""
+        if cache_key_extras is None:
+            cache_key_extras = ["" for _ in prompts]
+
         if len(prompts) == 1:
-            return [self.query(prompts[0], temperature)]
+            return [
+                self.query(
+                    prompts[0],
+                    temperature,
+                    cache_key_extra=cache_key_extras[0],
+                    bypass_cache=bypass_cache,
+                )
+            ]
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(prompts)
         ) as executor:
-            futures = [executor.submit(self.query, p, temperature) for p in prompts]
+            futures = [
+                executor.submit(self.query, p, temperature, extra, bypass_cache)
+                for p, extra in zip(prompts, cache_key_extras)
+            ]
             return [f.result() for f in futures]
 
-    async def aquery(self, prompt: str, temperature: float = 0.7) -> str:
+    async def aquery(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        cache_key_extra: str = "",
+        bypass_cache: bool = False,
+    ) -> str:
         """Async compatibility wrapper."""
         import asyncio
 
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self.query, prompt, temperature)
+        return await loop.run_in_executor(
+            None, self.query, prompt, temperature, cache_key_extra, bypass_cache
+        )
 
     async def aquery_parallel(
-        self, prompts: list[str], temperature: float = 0.7
+        self,
+        prompts: list[str],
+        temperature: float = 0.7,
+        cache_key_extras: list[str] | None = None,
+        bypass_cache: bool = False,
     ) -> list[str]:
         """Async parallel compatibility wrapper."""
         import asyncio
 
-        tasks = [self.aquery(p, temperature) for p in prompts]
+        if cache_key_extras is None:
+            cache_key_extras = ["" for _ in prompts]
+
+        tasks = [
+            self.aquery(p, temperature, extra, bypass_cache)
+            for p, extra in zip(prompts, cache_key_extras)
+        ]
         return await asyncio.gather(*tasks)
