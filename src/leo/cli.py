@@ -315,8 +315,8 @@ def experiment(
         "exp3": "experiments/archive/exp3_high_dim.py",
         "exp4": "experiments/archive/exp4_engineering.py",
         "exp5": "experiments/archive/exp5_reasoning_rnd.py",
-        "comparison": "experiments/run_comparison.py",
-        "ablation": "experiments/run_ablation.py",
+        "comparison": "experiments/comparison/run_comparison.py",
+        "ablation": "experiments/ablation/run_ablation.py",
     }
 
     targets = list(exp_map.keys()) if name.lower() == "all" else [name.lower()]

@@ -166,8 +166,8 @@ class AblationLEOAlgorithm:
                     )
 
                     cache_extras = [
-                        f"ablation_no_hist_exp_s{self.seed}_i{iteration}",
-                        f"ablation_no_hist_exp_s{self.seed}_i{iteration}",
+                        f"ablation_no_hist_explore_s{self.seed}_i{iteration}",
+                        f"ablation_no_hist_exploit_s{self.seed}_i{iteration}",
                     ]
                     resp_explore, resp_exploit = self.llm_client.query_parallel(
                         [prompt_explore, prompt_exploit],

@@ -1,0 +1,13 @@
+Problem,Variant,Runs,Total Time (s),Mean Time/Run (s),Median Time (s),LLM Queries,Prompt Tokens,Completion Tokens,Total Tokens,Est. Cost ($),Avg Cost/Run ($),Mode
+GoldsteinPrice,full,10,605.10,60.51 ± 5.20,59.54,600,145577,50666,196243,$0.1488,$0.0149,Live API
+GoldsteinPrice,no_elitism,10,776.58,77.66 ± 3.04,77.53,600,145522,49920,195442,$0.1476,$0.0148,Live API
+GoldsteinPrice,no_history,10,463.21,46.32 ± 1.22,46.17,600,80749,47871,128620,$0.1122,$0.0112,Live API
+GoldsteinPrice,random_perturb,10,0.02,0.00 ± 0.00,0.00,0,0,0,0,$0.0000,$0.0000,Random Perturb (No LLM)
+Rosenbrock2D,full,1,0.01,0.01 ± 0.00,0.01,60,14070,4488,18558,$0.0138,$0.0138,Mock (Simulated)
+Rosenbrock2D,no_elitism,10,733.74,73.37 ± 2.50,73.30,600,140700,42543,183243,$0.1342,$0.0134,Live API
+Rosenbrock2D,no_history,10,419.21,41.92 ± 0.80,42.01,600,78300,42000,120300,$0.1022,$0.0102,Live API
+Rosenbrock2D,random_perturb,10,0.02,0.00 ± 0.00,0.00,0,0,0,0,$0.0000,$0.0000,Random Perturb (No LLM)
+ShiftedRosenbrock_10D,full,10,1441.25,144.12 ± 5.57,142.08,600,271793,243103,514896,$0.5006,$0.0501,Live API
+ShiftedRosenbrock_10D,no_elitism,10,2216.08,221.61 ± 10.64,218.18,600,279011,256766,535777,$0.5247,$0.0525,Live API
+ShiftedRosenbrock_10D,no_history,10,1096.44,109.64 ± 2.87,109.10,600,145552,263557,409109,$0.4681,$0.0468,Live API
+ShiftedRosenbrock_10D,random_perturb,10,0.02,0.00 ± 0.00,0.00,0,0,0,0,$0.0000,$0.0000,Random Perturb (No LLM)

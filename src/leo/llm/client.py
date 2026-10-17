@@ -7,8 +7,15 @@ import hashlib
 import sqlite3
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
-from openai import APIConnectionError, OpenAI, RateLimitError
+from openai import (
+    APIConnectionError,
+    DefaultHttpxClient,
+    InternalServerError,
+    OpenAI,
+    RateLimitError,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from leo.llm.mock import MockLLM
@@ -125,9 +132,15 @@ class LLMClient:
     @property
     def sync_client(self) -> OpenAI:
         if self._sync_client is None:
+            parsed = urlparse(self.settings.openai_base_url)
+            # If target is localhost / 127.0.0.1, bypass any system proxies (e.g. Clash/Surge)
+            # that might intercept localhost requests and return HTTP 503 Service Unavailable.
+            is_local = parsed.hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0")
+            http_client = DefaultHttpxClient(trust_env=False) if is_local else None
             self._sync_client = OpenAI(
-                api_key=self.settings.openai_api_key,
+                api_key=self.settings.openai_api_key or "sk-dummy-local",
                 base_url=self.settings.openai_base_url,
+                http_client=http_client,
             )
         return self._sync_client
 
@@ -150,7 +163,7 @@ class LLMClient:
             if cached_res is not None:
                 return cached_res
 
-        # Execute API call with exponential backoff on HTTP 429
+        # Execute API call with exponential backoff on HTTP 429/500/502/503
         delay = self.settings.initial_retry_delay
         for attempt in range(self.settings.max_retries):
             try:
@@ -158,8 +171,9 @@ class LLMClient:
                 response = self.sync_client.chat.completions.create(
                     model=self.settings.leo_model_name,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    extra_body={"enable_thinking": False},
+                    # temperature=temperature,
+                    # extra_body={"enable_thinking": False},
+                    extra_body={"reasoning_effort": "none"},
                 )
                 req_latency = time.perf_counter() - t_req
                 text = response.choices[0].message.content or ""
@@ -171,7 +185,7 @@ class LLMClient:
                     latency=req_latency,
                 )
                 return text
-            except (RateLimitError, APIConnectionError):
+            except (RateLimitError, APIConnectionError, InternalServerError):
                 if attempt == self.settings.max_retries - 1:
                     raise
                 time.sleep(delay)
